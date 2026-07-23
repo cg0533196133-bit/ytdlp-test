@@ -1,4 +1,4 @@
-name: Test yt-dlp Link Extraction
+name: Download Video to File
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ on:
         default: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
 
 jobs:
-  extract-link:
+  download-video:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,11 +18,13 @@ jobs:
           sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
           sudo chmod a+rx /usr/local/bin/yt-dlp
 
-      - name: Extract Direct Video URL
+      - name: Download Video File
         run: |
-          echo "Fetching direct Google Video URL..."
-          DIRECT_URL=$(yt-dlp -g "${{ github.event.inputs.youtube_url }}")
-          echo "------------------------------------------------"
-          echo "FOUND DIRECT URL:"
-          echo "$DIRECT_URL"
-          echo "------------------------------------------------"
+          echo "Downloading video..."
+          yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" -o "video.mp4" "${{ github.event.inputs.youtube_url }}"
+
+      - name: Upload Video as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: downloaded-video
+          path: video.mp4
