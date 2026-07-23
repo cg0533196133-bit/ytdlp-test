@@ -21,7 +21,7 @@ jobs:
       - name: Download Video File
         run: |
           echo "Downloading video..."
-          yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" -o "video.mp4" "${{ github.event.inputs.youtube_url }}"
+          yt-dlp -f "b[ext=mp4]/b" --recode-video mp4 -o "video.mp4" "${{ github.event.inputs.youtube_url }}"
 
       - name: Upload Video as Artifact
         uses: actions/upload-artifact@v4
