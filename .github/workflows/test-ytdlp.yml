@@ -13,8 +13,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install yt-dlp & Deno
+      - name: Install yt-dlp, Deno & FFmpeg
         run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
           sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
           sudo chmod a+rx /usr/local/bin/yt-dlp
           curl -fsSL https://deno.land/install.sh | sh
@@ -24,10 +25,15 @@ jobs:
         run: |
           echo "${{ secrets.YOUTUBE_COOKIES }}" > cookies.txt
 
-      - name: Download Video File (Limited Resolution)
+      - name: Download Video File (With Audio)
         run: |
-          echo "Downloading video in lower resolution..."
-          yt-dlp --cookies cookies.txt -f "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best[height<=480]" --recode-video mp4 -o "downloaded_video.mp4" "${{ github.event.inputs.youtube_url }}"
+          echo "Downloading video and audio..."
+          yt-dlp \
+            --cookies cookies.txt \
+            -f "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best[height<=480]" \
+            --merge-output-format mp4 \
+            -o "downloaded_video.mp4" \
+            "${{ github.event.inputs.youtube_url }}"
 
       - name: Remove Temporary Cookies
         if: always()
