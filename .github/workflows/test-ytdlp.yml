@@ -18,10 +18,14 @@ jobs:
           sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
           sudo chmod a+rx /usr/local/bin/yt-dlp
 
+      - name: Save Cookies File
+        run: |
+          echo "${{ secrets.YOUTUBE_COOKIES }}" > cookies.txt
+
       - name: Download Video File
         run: |
           echo "Downloading video..."
-          yt-dlp --extractor-args "youtube:player_client=ios,web" -f "b[ext=mp4]/b" --recode-video mp4 -o "video.mp4" "${{ github.event.inputs.youtube_url }}"
+          yt-dlp --cookies cookies.txt -f "b[ext=mp4]/b" --recode-video mp4 -o "video.mp4" "${{ github.event.inputs.youtube_url }}"
 
       - name: Upload Video as Artifact
         uses: actions/upload-artifact@v4
