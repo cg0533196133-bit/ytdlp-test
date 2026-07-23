@@ -24,10 +24,10 @@ jobs:
         run: |
           echo "${{ secrets.YOUTUBE_COOKIES }}" > cookies.txt
 
-      - name: Download Video File
+      - name: Download Video File (Limited Resolution)
         run: |
-          echo "Downloading video..."
-          yt-dlp --cookies cookies.txt -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --recode-video mp4 -o "downloaded_video.mp4" "${{ github.event.inputs.youtube_url }}"
+          echo "Downloading video in lower resolution..."
+          yt-dlp --cookies cookies.txt -f "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best[height<=480]" --recode-video mp4 -o "downloaded_video.mp4" "${{ github.event.inputs.youtube_url }}"
 
       - name: Remove Temporary Cookies
         if: always()
