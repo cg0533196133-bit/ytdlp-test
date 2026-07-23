@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install yt-dlp & Deno (JS Runtime)
+      - name: Install yt-dlp & Deno
         run: |
           sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
           sudo chmod a+rx /usr/local/bin/yt-dlp
@@ -27,10 +27,15 @@ jobs:
       - name: Download Video File
         run: |
           echo "Downloading video..."
-          yt-dlp --cookies cookies.txt -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --recode-video mp4 -o "video.mp4" "${{ github.event.inputs.youtube_url }}"
+          yt-dlp --cookies cookies.txt -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --recode-video mp4 -o "downloaded_video.mp4" "${{ github.event.inputs.youtube_url }}"
+
+      - name: Remove Temporary Cookies
+        if: always()
+        run: |
+          rm -f cookies.txt
 
       - name: Upload Video as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: downloaded-video
-          path: video.mp4
+          path: "*.mp4"
