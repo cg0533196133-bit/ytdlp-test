@@ -6,7 +6,7 @@ on:
       youtube_url:
         description: 'הדבק כאן את הקישור לבדיקה'
         required: true
-        default: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+        default: ''
 
 jobs:
   download-video:
