@@ -32,7 +32,7 @@ jobs:
             --cookies cookies.txt \
             -f "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best[height<=480]" \
             --merge-output-format mp4 \
-            -o "downloaded_video.mp4" \
+            -o "%(title)s.%(ext)s" \
             "${{ github.event.inputs.youtube_url }}"
 
       - name: Remove Temporary Cookies
