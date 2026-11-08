@@ -13,13 +13,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install yt-dlp, Deno & FFmpeg
+      - name: Install yt-dlp & FFmpeg
         run: |
           sudo apt-get update && sudo apt-get install -y ffmpeg
           sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
           sudo chmod a+rx /usr/local/bin/yt-dlp
-          curl -fsSL https://deno.land/install.sh | sh
-          echo "$HOME/.deno/bin" >> $GITHUB_PATH
 
       - name: Save Cookies File
         run: |
@@ -32,7 +30,7 @@ jobs:
             --cookies cookies.txt \
             -f "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best[height<=480]" \
             --merge-output-format mp4 \
-            -o "%(title)s.%(ext)s" \
+            -o "output_video.mp4" \
             "${{ github.event.inputs.youtube_url }}"
 
       - name: Remove Temporary Cookies
@@ -44,4 +42,18 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: downloaded-video
-          path: "*.mp4"
+          path: output_video.mp4
+
+      - name: Get Direct Download URL
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          echo "Fetching artifact download information..."
+          # שליפת פרטי ה-Artifact דרך ה-API של גיטהאב
+          ARTIFACT_URL="https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID/artifacts"
+          RESPONSE=$(curl -s -H "Authorization: Bearer $GH_TOKEN" "$ARTIFACT_URL")
+          
+          # הדפסת הקישור הישיר בתוך הלוגים
+          echo "Artifact API Details:"
+          echo "$RESPONSE"
