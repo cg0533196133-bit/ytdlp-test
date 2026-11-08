@@ -11,6 +11,9 @@ on:
 jobs:
   download-video:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
 
     steps:
       - name: Install yt-dlp, Deno & FFmpeg
@@ -41,7 +44,24 @@ jobs:
           rm -f cookies.txt
 
       - name: Upload Video as Artifact
+        id: upload-artifact
         uses: actions/upload-artifact@v4
         with:
           name: downloaded-video
-          path: "*.mp4" 
+          path: "*.mp4"
+
+      - name: Print Direct Download Link
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RUN_ID="${{ github.run_id }}"
+          REPO="${{ github.repository }}"
+          
+          echo "שולף את פרטי הארטיפקט..."
+          # שליפת הקישור הישיר להורדת הארטיפקט דרך ה-API של גיטהאב
+          DOWNLOAD_URL=$(gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts" --jq '.artifacts[] | select(.name == "downloaded-video") | .archive_download_url')
+          
+          echo "=========================================="
+          echo "כתובת ההורדה הישירה (דורשת הזדהות בגיטהאב):"
+          echo "$DOWNLOAD_URL"
+          echo "=========================================="
