@@ -13,14 +13,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install FFmpeg, Deno & yt-dlp
+      - name: Install FFmpeg & yt-dlp
         run: |
           sudo apt-get update && sudo apt-get install -y ffmpeg curl
-          # התקנת Deno עבור פענוח האתגרים של יוטיוב
-          curl -fsSL https://deno.land/install.sh | sh
-          echo "$HOME/.deno/bin" >> $GITHUB_PATH
-          
-          # התקנת yt-dlp מעודכן
           sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
           sudo chmod a+rx /usr/local/bin/yt-dlp
 
@@ -29,11 +24,9 @@ jobs:
           echo "${{ secrets.YOUTUBE_COOKIES }}" > cookies.txt
 
       - name: Download Video File (With Audio)
-        env:
-          PATH: ${{ env.PATH }}:/home/runner/.deno/bin
         run: |
           echo "Downloading video and audio..."
-          yt-dlp \
+          /usr/local/bin/yt-dlp \
             --cookies cookies.txt \
             -f "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best[height<=480]" \
             --merge-output-format mp4 \
