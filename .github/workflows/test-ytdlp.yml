@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install yt-dlp & FFmpeg
+      - name: Install FFmpeg & yt-dlp
         run: |
           sudo apt-get update && sudo apt-get install -y ffmpeg
           sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
@@ -23,13 +23,14 @@ jobs:
         run: |
           echo "${{ secrets.YOUTUBE_COOKIES }}" > cookies.txt
 
-      - name: Download Video File (Lightweight)
+      - name: Download Video File (With Audio)
         run: |
-          echo "Downloading compressed video for smooth playback..."
+          echo "Downloading video and audio..."
           yt-dlp \
             --cookies cookies.txt \
-            -f "best[height<=360]" \
-            -o "output_video.mp4" \
+            -f "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best[height<=480]" \
+            --merge-output-format mp4 \
+            -o "downloaded_video.mp4" \
             "${{ github.event.inputs.youtube_url }}"
 
       - name: Remove Temporary Cookies
@@ -41,15 +42,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: downloaded-video
-          path: output_video.mp4
-
-      - name: Get Direct Download URL
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RUN_ID: ${{ github.run_id }}
-        run: |
-          echo "Fetching artifact download information..."
-          ARTIFACT_URL="https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID/artifacts"
-          RESPONSE=$(curl -s -H "Authorization: Bearer $GH_TOKEN" "$ARTIFACT_URL")
-          echo "Artifact API Details:"
-          echo "$RESPONSE"
+          path: downloaded_video.mp4
