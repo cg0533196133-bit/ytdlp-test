@@ -23,13 +23,12 @@ jobs:
         run: |
           echo "${{ secrets.YOUTUBE_COOKIES }}" > cookies.txt
 
-      - name: Download Video File (With Audio)
+      - name: Download Video File (Lightweight)
         run: |
-          echo "Downloading video and audio..."
+          echo "Downloading compressed video for smooth playback..."
           yt-dlp \
             --cookies cookies.txt \
-            -f "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best[height<=480]" \
-            --merge-output-format mp4 \
+            -f "best[height<=360]" \
             -o "output_video.mp4" \
             "${{ github.event.inputs.youtube_url }}"
 
@@ -50,10 +49,7 @@ jobs:
           RUN_ID: ${{ github.run_id }}
         run: |
           echo "Fetching artifact download information..."
-          # שליפת פרטי ה-Artifact דרך ה-API של גיטהאב
           ARTIFACT_URL="https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID/artifacts"
           RESPONSE=$(curl -s -H "Authorization: Bearer $GH_TOKEN" "$ARTIFACT_URL")
-          
-          # הדפסת הקישור הישיר בתוך הלוגים
           echo "Artifact API Details:"
           echo "$RESPONSE"
