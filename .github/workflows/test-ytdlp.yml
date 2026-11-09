@@ -35,8 +35,22 @@ jobs:
             --cookies cookies.txt \
             -f "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best[height<=480]" \
             --merge-output-format mp4 \
-            -o "%(title)s.%(ext)s" \
+            -o "output_raw.%(ext)s" \
             "${{ github.event.inputs.youtube_url }}"
+
+      - name: Fix and Re-encode Video Headers
+        run: |
+          echo "מתקן ובודק את מבנה הקובץ..."
+          RAW_FILE=$(find . -maxdepth 1 -name "output_raw.mp4" | head -n 1)
+          
+          if [ -f "$RAW_FILE" ]; then
+            # יצירת קובץ חדש ונקי עם כותרות תקינות לחלוטין
+            ffmpeg -i "$RAW_FILE" -c copy "fixed_video.mp4"
+            rm -f "$RAW_FILE"
+          else
+            echo "שגיאה: הקובץ הגולמי לא נמצא."
+            exit 1
+          fi
 
       - name: Remove Temporary Cookies
         if: always()
@@ -48,25 +62,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: downloaded-video
-          path: "*.mp4"
-
-      - name: Upload to Public Temporary Link
-        run: |
-          # מציאת הקובץ בצורה בטוחה
-          VIDEO_FILE=$(find . -maxdepth 1 -name "*.mp4" | head -n 1)
-          
-          if [ -z "$VIDEO_FILE" ]; then
-            echo "שגיאה: לא נמצא קובץ MP4 להעלאה."
-            exit 1
-          fi
-          
-          VIDEO_FILE_NAME=$(basename "$VIDEO_FILE")
-          
-          echo "מעלה את הקובץ: $VIDEO_FILE_NAME"
-          
-          PUBLIC_URL=$(curl --upload-file "$VIDEO_FILE" "https://transfer.sh/$VIDEO_FILE_NAME")
-          
-          echo "=========================================="
-          echo "קישור הורדה ישיר וציבורי:"
-          echo "$PUBLIC_URL"
-          echo "=========================================="
+          path: "fixed_video.mp4"
