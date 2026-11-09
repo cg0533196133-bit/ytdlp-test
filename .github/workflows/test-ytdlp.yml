@@ -16,9 +16,10 @@ jobs:
       actions: read
 
     steps:
-      - name: Install FFmpeg, Python & Latest yt-dlp
+      - name: Install FFmpeg, Node.js & Latest yt-dlp
         run: |
-          sudo apt-get update && sudo apt-get install -y ffmpeg curl python3-pip
+          sudo apt-get update && sudo apt-get install -y ffmpeg curl nodejs npm
+          # התקנת הגרסה העדכנית ביותר של yt-dlp
           sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
           sudo chmod a+rx /usr/local/bin/yt-dlp
           yt-dlp --version
@@ -29,8 +30,8 @@ jobs:
 
       - name: Download Video File (With Audio)
         run: |
-          echo "Downloading video (handling shorts/formats)..."
-          # פקודה שמתמודדת עם סרטונים קצרים ופורמטים מיוחדים
+          echo "Downloading video with EJS challenge solver..."
+          # שימוש בגרסה המעודכנת שנעזרת ב-Node.js לפענוח האתגר של יוטיוב
           yt-dlp \
             --cookies cookies.txt \
             -f "bv*+ba/b" \
