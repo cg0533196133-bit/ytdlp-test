@@ -52,12 +52,21 @@ jobs:
 
       - name: Upload to Public Temporary Link
         run: |
-          # מוצא את שם קובץ ה-MP4 שירד
-          VIDEO_FILE=$(ls *.mp4 | head -n 1)
+          # מציאת הקובץ בצורה בטוחה (כולל טיפול ברווחים ושמות מורכבים)
+          VIDEO_FILE=$(find . -maxdepth 1 -name "*.mp4" | head -n 1)
           
-          echo "מעלה את הקובץ לקישור ציבורי זמני..."
-          # העלאה ל-transfer.sh (הקובץ זמין להורדה ישירה מידית)
-          PUBLIC_URL=$(curl --upload-file "$VIDEO_FILE" https://transfer.sh/"$VIDEO_FILE")
+          if [ -z "$VIDEO_FILE" ]; then
+            echo "שגיאה: לא נמצא קובץ MP4 להעלאה."
+            exit 1
+          }
+          
+          # הסרת הקידומת './' מהנתיב אם קיימת
+          VIDEO_FILE_NAME=$(basename "$VIDEO_FILE")
+          
+          echo "מעלה את הקובץ: $VIDEO_FILE_NAME"
+          
+          # העלאה תקינה עם קידוד נכון של שם הקובץ
+          PUBLIC_URL=$(curl --upload-file "$VIDEO_FILE" "https://transfer.sh/$VIDEO_FILE_NAME")
           
           echo "=========================================="
           echo "קישור הורדה ישיר וציבורי:"
