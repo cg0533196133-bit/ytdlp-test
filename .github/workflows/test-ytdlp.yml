@@ -50,18 +50,16 @@ jobs:
           name: downloaded-video
           path: "*.mp4"
 
-      - name: Print Direct Download Link
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload to Public Temporary Link
         run: |
-          RUN_ID="${{ github.run_id }}"
-          REPO="${{ github.repository }}"
+          # מוצא את שם קובץ ה-MP4 שירד
+          VIDEO_FILE=$(ls *.mp4 | head -n 1)
           
-          echo "שולף את פרטי הארטיפקט..."
-          # שליפת הקישור הישיר להורדת הארטיפקט דרך ה-API של גיטהאב
-          DOWNLOAD_URL=$(gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts" --jq '.artifacts[] | select(.name == "downloaded-video") | .archive_download_url')
+          echo "מעלה את הקובץ לקישור ציבורי זמני..."
+          # העלאה ל-transfer.sh (הקובץ זמין להורדה ישירה מידית)
+          PUBLIC_URL=$(curl --upload-file "$VIDEO_FILE" https://transfer.sh/"$VIDEO_FILE")
           
           echo "=========================================="
-          echo "כתובת ההורדה הישירה (דורשת הזדהות בגיטהאב):"
-          echo "$DOWNLOAD_URL"
+          echo "קישור הורדה ישיר וציבורי:"
+          echo "$PUBLIC_URL"
           echo "=========================================="
