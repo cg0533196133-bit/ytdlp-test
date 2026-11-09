@@ -29,11 +29,11 @@ jobs:
 
       - name: Download Video File (With Audio)
         run: |
-          echo "Downloading video and audio..."
-          # שאילתה גמישה ובטוחה יותר שמתאימה לשינויים של יוטיוב
+          echo "Downloading best available video..."
+          # שימוש בהגדרה הגמישה ביותר: מוריד את האיכות הטובה ביותר שקיימת וממזג ל-mp4
           yt-dlp \
             --cookies cookies.txt \
-            -f "b[height<=480]/best" \
+            -f "bestvideo+bestaudio/best" \
             --merge-output-format mp4 \
             -o "video.%(ext)s" \
             "${{ github.event.inputs.youtube_url }}"
