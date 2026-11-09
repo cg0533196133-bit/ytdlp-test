@@ -16,13 +16,14 @@ jobs:
       actions: read
 
     steps:
-      - name: Install yt-dlp, Deno & FFmpeg
+      - name: Install FFmpeg & Latest yt-dlp
         run: |
-          sudo apt-get update && sudo apt-get install -y ffmpeg
-          sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+          sudo apt-get update && sudo apt-get install -y ffmpeg curl
+          # התקנת הגרסה העדכנית ביותר ישירות מהרפוזיטורי הרשמי
+          sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
           sudo chmod a+rx /usr/local/bin/yt-dlp
-          curl -fsSL https://deno.land/install.sh | sh
-          echo "$HOME/.deno/bin" >> $GITHUB_PATH
+          # וידוא גרסה
+          yt-dlp --version
 
       - name: Save Cookies File
         run: |
@@ -33,24 +34,11 @@ jobs:
           echo "Downloading video and audio..."
           yt-dlp \
             --cookies cookies.txt \
+            --verbose \
             -f "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best[height<=480]" \
             --merge-output-format mp4 \
-            -o "output_raw.%(ext)s" \
+            -o "video.%(ext)s" \
             "${{ github.event.inputs.youtube_url }}"
-
-      - name: Fix and Re-encode Video Headers
-        run: |
-          echo "מתקן ובודק את מבנה הקובץ..."
-          RAW_FILE=$(find . -maxdepth 1 -name "output_raw.mp4" | head -n 1)
-          
-          if [ -f "$RAW_FILE" ]; then
-            # יצירת קובץ חדש ונקי עם כותרות תקינות לחלוטין
-            ffmpeg -i "$RAW_FILE" -c copy "fixed_video.mp4"
-            rm -f "$RAW_FILE"
-          else
-            echo "שגיאה: הקובץ הגולמי לא נמצא."
-            exit 1
-          fi
 
       - name: Remove Temporary Cookies
         if: always()
@@ -58,8 +46,7 @@ jobs:
           rm -f cookies.txt
 
       - name: Upload Video as Artifact
-        id: upload-artifact
         uses: actions/upload-artifact@v4
         with:
           name: downloaded-video
-          path: "fixed_video.mp4"
+          path: "video.mp4"
