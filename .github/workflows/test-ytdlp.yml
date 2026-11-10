@@ -1,52 +1,47 @@
-name: YouTube Download and Artifact Upload
+name: Download Video to File
 
 on:
   workflow_dispatch:
     inputs:
       youtube_url:
-        description: 'כתובת ה-URL של יוטיוב להורדה'
+        description: 'הדבק כאן את הקישור לבדיקה'
         required: true
-        type: string
+        default: ''
 
 jobs:
-  download:
+  download-video:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Set up Latest Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: 'latest'
-
-      - name: Install yt-dlp and EJS packages
+      - name: Install yt-dlp, Deno & FFmpeg
         run: |
-          python -m pip install --upgrade pip
-          pip install --upgrade --force-reinstall "yt-dlp[default]"
-          pip install --upgrade yt-dlp-ejs
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+          sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+          sudo chmod a+rx /usr/local/bin/yt-dlp
+          curl -fsSL https://deno.land/install.sh | sh
+          echo "$HOME/.deno/bin" >> $GITHUB_PATH
 
-      - name: Create cookies file from Secrets
+      - name: Save Cookies File
         run: |
           echo "${{ secrets.YOUTUBE_COOKIES }}" > cookies.txt
 
-      - name: Download Video using Deno Runtime
+      - name: Download Video File (With Audio)
         run: |
-          # ההורדה מתבצעת ושומרת את הקובץ בשם המקורי של הסרטון
-          yt-dlp -v --js-runtimes deno --cookies cookies.txt "${{ github.event.inputs.youtube_url }}"
+          echo "Downloading video and audio..."
+          yt-dlp \
+            --cookies cookies.txt \
+            -f "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best[height<=480]" \
+            --merge-output-format mp4 \
+            -o "%(title)s.%(ext)s" \
+            "${{ github.event.inputs.youtube_url }}"
 
-      - name: Upload Downloaded File as Artifact
+      - name: Remove Temporary Cookies
+        if: always()
+        run: |
+          rm -f cookies.txt
+
+      - name: Upload Video as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: downloaded-video
-          path: |
-            *.mp4
-            *.mkv
-            *.webm
-            *.m4a
-            *.mp3
+          path: "*.mp4"  
