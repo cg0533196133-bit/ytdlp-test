@@ -1,4 +1,4 @@
-name: Download YouTube Video - Debug Mode
+name: YouTube Download & Diagnostics
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ on:
         type: string
 
 jobs:
-  download:
+  diagnose_and_download:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -20,41 +20,51 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Set up Node.js (Required for challenge solving)
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Debug Environment Info
+      - name: 1. System & Environment Diagnostic
         run: |
-          echo "=== Python Version ==="
+          echo "=== SYSTEM CHECK ==="
+          echo "Python path: $(which python3)"
           python3 --version
-          echo "=== Node Version ==="
+          echo "Node path: $(which node)"
           node -v
-          echo "=== Pip Packages ==="
-          pip list
+          echo "NPM path: $(which npm)"
+          npm -v
 
-      - name: Install latest yt-dlp and dependencies
+      - name: 2. Install/Upgrade yt-dlp & Dependencies
         run: |
           python -m pip install --upgrade pip
+          # מתקין את הגרסה העדכנית ביותר יחד עם תמיכת JS מובנית
           pip install --upgrade --force-reinstall "yt-dlp[default]"
+          pip install --upgrade yt-dlp-ejs
 
-      - name: Create cookies file from Secrets
+      - name: 3. Verify Cookies Secret
         run: |
-          # יוצר את הקובץ ומוודא שנוצר בהצלחה
+          # כותב את העוגיות לקובץ ובודק שלא ריק ושפורמט הבסיס תקין
           echo "${{ secrets.YOUTUBE_COOKIES }}" > cookies.txt
           if [ -s cookies.txt ]; then
-            echo "Cookies file created successfully (size > 0)."
+            echo "SUCCESS: cookies.txt created and is not empty."
+            echo "File size: $(wc -c < cookies.txt) bytes"
           else
-            echo "WARNING: Cookies file is empty! Check your GitHub Secret."
+            echo "ERROR: cookies.txt is empty! Please check GitHub Secrets."
+            exit 1
           fi
 
-      - name: Download video with verbose logging
+      - name: 4. Extract Video Info (Dry Run & Format Check)
         run: |
-          # הדגל -v (verbose) יגרום ל-yt-dlp להדפיס בדיוק מה הבעיה אם תהיה שגיאה
+          # מדפיס את רשימת הפורמטים הזמינים כדי לראות מה יוטיוב מחזיר בפועל
+          yt-dlp --cookies cookies.txt --list-formats "${{ github.event.inputs.youtube_url }}" || echo "WARNING: --list-formats encountered an issue, proceeding to verbose download."
+
+      - name: 5. Download Video with Full Verbose Logs
+        run: |
+          # מריץ הורדה עם לוגים מלאים (-v)
           yt-dlp -v --cookies cookies.txt "${{ github.event.inputs.youtube_url }}"
 
-      - name: Upload downloaded file as artifact
+      - name: 6. Upload Downloaded File as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: downloaded-video
