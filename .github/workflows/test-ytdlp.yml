@@ -25,46 +25,37 @@ jobs:
         with:
           node-version: '20'
 
-      - name: 1. System & Environment Diagnostic
+      - name: Verify Node and PATH
         run: |
-          echo "=== SYSTEM CHECK ==="
-          echo "Python path: $(which python3)"
-          python3 --version
-          echo "Node path: $(which node)"
+          echo "=== NODE PATH & VERSION ==="
+          which node
           node -v
-          echo "NPM path: $(which npm)"
-          npm -v
+          # מוודא שהנתיב של Node זמין באופן גלובלי למערכת
+          export PATH=$PATH
 
-      - name: 2. Install/Upgrade yt-dlp & Dependencies
+      - name: Install yt-dlp and JavaScript support packages
         run: |
           python -m pip install --upgrade pip
-          # מתקין את הגרסה העדכנית ביותר יחד עם תמיכת JS מובנית
+          # מתקין yt-dlp יחד עם חבילות עזר שפתרו בעיות פתרון אתגרים (EJS)
           pip install --upgrade --force-reinstall "yt-dlp[default]"
           pip install --upgrade yt-dlp-ejs
 
-      - name: 3. Verify Cookies Secret
+      - name: Verify Cookies Secret
         run: |
-          # כותב את העוגיות לקובץ ובודק שלא ריק ושפורמט הבסיס תקין
           echo "${{ secrets.YOUTUBE_COOKIES }}" > cookies.txt
           if [ -s cookies.txt ]; then
-            echo "SUCCESS: cookies.txt created and is not empty."
-            echo "File size: $(wc -c < cookies.txt) bytes"
+            echo "SUCCESS: cookies.txt created."
           else
-            echo "ERROR: cookies.txt is empty! Please check GitHub Secrets."
+            echo "ERROR: cookies.txt is empty!"
             exit 1
           fi
 
-      - name: 4. Extract Video Info (Dry Run & Format Check)
+      - name: Download Video with Verbose Logs
         run: |
-          # מדפיס את רשימת הפורמטים הזמינים כדי לראות מה יוטיוב מחזיר בפועל
-          yt-dlp --cookies cookies.txt --list-formats "${{ github.event.inputs.youtube_url }}" || echo "WARNING: --list-formats encountered an issue, proceeding to verbose download."
-
-      - name: 5. Download Video with Full Verbose Logs
-        run: |
-          # מריץ הורדה עם לוגים מלאים (-v)
+          # מריץ את ההורדה
           yt-dlp -v --cookies cookies.txt "${{ github.event.inputs.youtube_url }}"
 
-      - name: 6. Upload Downloaded File as Artifact
+      - name: Upload Downloaded File as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: downloaded-video
