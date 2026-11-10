@@ -1,4 +1,4 @@
-name: YouTube Download with Deno EJS
+name: YouTube Download with Latest Deno
 
 on:
   workflow_dispatch:
@@ -20,10 +20,10 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Set up Deno (Recommended JS Runtime for yt-dlp EJS)
+      - name: Set up Latest Deno
         uses: denoland/setup-deno@v2
         with:
-          deno-version: v1.x
+          deno-version: 'latest'
 
       - name: Install yt-dlp and EJS packages
         run: |
@@ -35,9 +35,8 @@ jobs:
         run: |
           echo "${{ secrets.YOUTUBE_COOKIES }}" > cookies.txt
 
-      - name: Download Video using Deno Runtime
+      - name: Download Video using Latest Deno Runtime
         run: |
-          # שימוש ב-deno כמנוע ה-JS פותר את בעיית ה-unsupported של Node
           yt-dlp -v --js-runtimes deno --cookies cookies.txt "${{ github.event.inputs.youtube_url }}"
 
       - name: Upload Downloaded File as Artifact
