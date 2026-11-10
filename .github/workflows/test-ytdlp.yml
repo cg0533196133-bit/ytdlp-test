@@ -1,51 +1,40 @@
-name: Download Video to File
+name: Download YouTube Video
 
 on:
   workflow_dispatch:
     inputs:
       youtube_url:
-        description: 'הדבק כאן את הקישור לבדיקה'
+        description: 'כתובת ה-URL של יוטיוב להורדה'
         required: true
-        default: ''
+        type: string
 
 jobs:
-  download-video:
+  download:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: read
-
     steps:
-      - name: Install FFmpeg, Node.js & Latest yt-dlp
-        run: |
-          sudo apt-get update && sudo apt-get install -y ffmpeg curl nodejs npm
-          # התקנת הגרסה העדכנית ביותר של yt-dlp
-          sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
-          sudo chmod a+rx /usr/local/bin/yt-dlp
-          yt-dlp --version
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Save Cookies File
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install yt-dlp and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install yt-dlp
+
+      - name: Create cookies file from Secrets
         run: |
           echo "${{ secrets.YOUTUBE_COOKIES }}" > cookies.txt
 
-      - name: Download Video File (With Audio)
+      - name: Download video
         run: |
-          echo "Downloading video with EJS challenge solver..."
-          # שימוש בגרסה המעודכנת שנעזרת ב-Node.js לפענוח האתגר של יוטיוב
-          yt-dlp \
-            --cookies cookies.txt \
-            -f "bv*+ba/b" \
-            --merge-output-format mp4 \
-            -o "video.%(ext)s" \
-            "${{ github.event.inputs.youtube_url }}"
+          yt-dlp --cookies cookies.txt "${{ github.event.inputs.youtube_url }}"
 
-      - name: Remove Temporary Cookies
-        if: always()
-        run: |
-          rm -f cookies.txt
-
-      - name: Upload Video as Artifact
+      - name: Upload downloaded file as artifact
         uses: actions/upload-artifact@v4
         with:
           name: downloaded-video
-          path: "video.mp4"
+          path: '*.%(ext)s'
