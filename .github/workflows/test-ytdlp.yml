@@ -1,4 +1,4 @@
-name: YouTube Download & Diagnostics
+name: YouTube Download with EJS Fix
 
 on:
   workflow_dispatch:
@@ -9,51 +9,36 @@ on:
         type: string
 
 jobs:
-  diagnose_and_download:
+  download:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses:-actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Set up Node.js
+      - name: Set up Node.js (Required for EJS Challenge Solver)
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Verify Node and PATH
-        run: |
-          echo "=== NODE PATH & VERSION ==="
-          which node
-          node -v
-          # מוודא שהנתיב של Node זמין באופן גלובלי למערכת
-          export PATH=$PATH
-
-      - name: Install yt-dlp and JavaScript support packages
+      - name: Install yt-dlp and EJS packages
         run: |
           python -m pip install --upgrade pip
-          # מתקין yt-dlp יחד עם חבילות עזר שפתרו בעיות פתרון אתגרים (EJS)
           pip install --upgrade --force-reinstall "yt-dlp[default]"
           pip install --upgrade yt-dlp-ejs
 
-      - name: Verify Cookies Secret
+      - name: Create cookies file from Secrets
         run: |
           echo "${{ secrets.YOUTUBE_COOKIES }}" > cookies.txt
-          if [ -s cookies.txt ]; then
-            echo "SUCCESS: cookies.txt created."
-          else
-            echo "ERROR: cookies.txt is empty!"
-            exit 1
-          fi
 
-      - name: Download Video with Verbose Logs
+      - name: Download Video using Node.js Runtime
         run: |
-          # מריץ את ההורדה
-          yt-dlp -v --cookies cookies.txt "${{ github.event.inputs.youtube_url }}"
+          # כאן נמצא התיקון הקריטי: אנחנו מכריחים את yt-dlp להשתמש ב-Node.js בעזרת הפרמטר החדש
+          yt-dlp -v --js-runtimes node --cookies cookies.txt "${{ github.event.inputs.youtube_url }}"
 
       - name: Upload Downloaded File as Artifact
         uses: actions/upload-artifact@v4
